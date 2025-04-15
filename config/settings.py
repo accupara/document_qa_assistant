@@ -12,8 +12,9 @@ class Settings(BaseSettings):
     
     # Vector store
     CHROMA_DB_PATH: Path = Field(..., env="CHROMA_DB_PATH")
-    EMBEDDING_MODEL: str = Field("all-MiniLM-L6-v2", env="EMBEDDING_MODEL")
+    EMBEDDING_MODEL: str = Field("sentence-transformers/all-MiniLM-L6-v2", env="EMBEDDING_MODEL")
     COLLECTION_NAME: str = Field("document_qa", env="COLLECTION_NAME")
+    HUGGINGFACE_CACHE_PATH: str = Field("", env="HUGGINGFACE_CACHE_PATH")
     
     # Search
     TOP_K: int = Field(5, env="TOP_K")
@@ -40,3 +41,4 @@ class Settings(BaseSettings):
         return Path(v)
 
 settings = Settings()
+os.environ["HF_HOME"] = settings.HUGGINGFACE_CACHE_PATH

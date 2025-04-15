@@ -1,10 +1,12 @@
 chromadb>=0.4.0
 langchain>=0.0.200
+langchain_community
 sentence-transformers>=2.2.2
 pydantic>=1.10.0
 pydantic_settings>=2.0.0
 python-dotenv>=0.21.0
-openai>=0.27.0
+openai==0.28
+markdown
 unstructured>=0.6.0
 PyPDF2>=3.0.0
 python-docx>=0.8.1

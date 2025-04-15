@@ -3,7 +3,7 @@ import chromadb
 from typing import List, Dict, Optional, Tuple
 from chromadb.config import Settings as ChromaSettings
 from chromadb.utils import embedding_functions
-from ..config.settings import settings
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +31,14 @@ class VectorStore:
             )
             logger.info(f"Using existing collection: {settings.COLLECTION_NAME}")
             return collection
-        except ValueError:
-            logger.info(f"Creating new collection: {settings.COLLECTION_NAME}")
+        except (ValueError, chromadb.errors.NotFoundError) as e:
+            logger.info(f"Creating new collection: {settings.COLLECTION_NAME} (reason: {str(e)})")
             return self.client.create_collection(
                 name=settings.COLLECTION_NAME,
                 embedding_function=self.embedding_function
             )
     
-    def add_documents(self, documents: List[Dict[str, Any]]):
+    def add_documents(self, documents: List[Dict[str, any]]):
         """Add documents to the vector store."""
         if not documents:
             logger.warning("No documents to add to vector store.")

@@ -1,7 +1,7 @@
 import logging
 from typing import Generator, Optional
 import openai
-from ..config.settings import settings
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
