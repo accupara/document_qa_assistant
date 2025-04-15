@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from typing import Optional
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Document processing
@@ -30,6 +31,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        case_sensitive = False
     
     @validator("DOCS_DIR", "CHROMA_DB_PATH", "LOG_FILE", pre=True)
     def validate_paths(cls, v):

@@ -9,6 +9,8 @@ DOCS_DIR?=documents/
 LOG_DIR?=logs/
 CHROMA_DB_DIR?=chroma_db/
 COLLECTION_NAME?=document_qa
+UNAME_S := $(shell uname -s)
+PYTHON_DARWIN_VERSION?=3.11.8
 
 # Targets
 .PHONY: all install install-dev clean test lint format run build package help
@@ -20,6 +22,13 @@ venv: $(VENV_NAME)/bin/activate
 
 $(VENV_NAME)/bin/activate: requirements.txt
 	test -d $(VENV_NAME) || $(PYTHON) -m venv $(VENV_NAME)
+ifeq ($(UNAME_S),Darwin)
+	echo "Detected macOS. Installing Python $(PYTHON_DARWIN_VERSION) via pyenv..."
+	. $(VENV_NAME)/bin/activate && pyenv install -s $(PYTHON_DARWIN_VERSION)
+	. $(VENV_NAME)/bin/activate && pyenv local $(PYTHON_DARWIN_VERSION)
+else
+	echo "Not macOS. Skipping pyenv install/local."
+endif
 	. $(VENV_NAME)/bin/activate && $(PIP) install --upgrade pip
 	. $(VENV_NAME)/bin/activate && $(PIP) install -r requirements.txt
 	touch $(VENV_NAME)/bin/activate
