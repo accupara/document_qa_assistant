@@ -69,7 +69,8 @@ class DocumentProcessor:
         logger.info(f"Split documents into {len(split_documents)} chunks")
         
         # Add embeddings to each document
-        for doc in split_documents:
+        for i, doc in enumerate(split_documents):
             doc.metadata["embedding"] = self.embed_text(doc.page_content)
-        
+            docname = doc.metadata["source"]
+            logger.info(f"Embedding {docname} chunk id - {i}")
         return split_documents
