@@ -1,15 +1,16 @@
 import logging
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Any, List, Optional, Dict, Any
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.document_loaders import (
+from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader,
     UnstructuredFileLoader,
     UnstructuredWordDocumentLoader,
     PyPDFLoader
 )
-from sentence_transformers import SentenceTransformer
-from ..config.settings import settings
+from sentence_transformers import SentenceTransformer, util as stutil
+from transformers import file_utils
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class DocumentProcessor:
             chunk_overlap=settings.CHUNK_OVERLAP,
             length_function=len
         )
+        # stutil.HUGGINGFACE_HUB_CACHE = settings.HUGGINGFACE_CACHE_PATH
+        print(file_utils.default_cache_path)
         self.embedding_model = SentenceTransformer(settings.EMBEDDING_MODEL)
     
     def load_documents(self) -> List[Dict[str, Any]]:
@@ -66,7 +69,8 @@ class DocumentProcessor:
         logger.info(f"Split documents into {len(split_documents)} chunks")
         
         # Add embeddings to each document
-        for doc in split_documents:
+        for i, doc in enumerate(split_documents):
             doc.metadata["embedding"] = self.embed_text(doc.page_content)
-        
+            docname = doc.metadata["source"]
+            logger.info(f"Embedding {docname} chunk id - {i}")
         return split_documents

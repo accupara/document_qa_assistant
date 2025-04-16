@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 from typing import Optional
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Document processing
@@ -11,8 +12,9 @@ class Settings(BaseSettings):
     
     # Vector store
     CHROMA_DB_PATH: Path = Field(..., env="CHROMA_DB_PATH")
-    EMBEDDING_MODEL: str = Field("all-MiniLM-L6-v2", env="EMBEDDING_MODEL")
+    EMBEDDING_MODEL: str = Field("sentence-transformers/all-MiniLM-L6-v2", env="EMBEDDING_MODEL")
     COLLECTION_NAME: str = Field("document_qa", env="COLLECTION_NAME")
+    HUGGINGFACE_CACHE_PATH: str = Field("", env="HUGGINGFACE_CACHE_PATH")
     
     # Search
     TOP_K: int = Field(5, env="TOP_K")
@@ -30,6 +32,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        case_sensitive = False
     
     @validator("DOCS_DIR", "CHROMA_DB_PATH", "LOG_FILE", pre=True)
     def validate_paths(cls, v):
@@ -38,3 +41,4 @@ class Settings(BaseSettings):
         return Path(v)
 
 settings = Settings()
+os.environ["HF_HOME"] = settings.HUGGINGFACE_CACHE_PATH

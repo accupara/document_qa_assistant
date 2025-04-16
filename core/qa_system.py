@@ -1,6 +1,6 @@
 import logging
 from typing import List, Tuple, Generator
-from ..config.settings import settings
+from config.settings import settings
 from .document_processor import DocumentProcessor
 from .vector_store import VectorStore
 from .llm_integration import LLMIntegration

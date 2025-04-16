@@ -1,9 +1,10 @@
 import logging
 import chromadb
-from typing import List, Dict, Optional, Tuple
+import json
+from typing import Any, List, Dict, Optional, Tuple
 from chromadb.config import Settings as ChromaSettings
 from chromadb.utils import embedding_functions
-from ..config.settings import settings
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
@@ -31,32 +32,54 @@ class VectorStore:
             )
             logger.info(f"Using existing collection: {settings.COLLECTION_NAME}")
             return collection
-        except ValueError:
-            logger.info(f"Creating new collection: {settings.COLLECTION_NAME}")
+        except (ValueError, chromadb.errors.NotFoundError) as e:
+            logger.info(f"Creating new collection: {settings.COLLECTION_NAME} (reason: {str(e)})")
             return self.client.create_collection(
                 name=settings.COLLECTION_NAME,
                 embedding_function=self.embedding_function
             )
     
+    def _sanitize_metadata(self, metadata: dict) -> dict:
+        """Convert complex metadata values to ChromaDB-compatible formats."""
+        sanitized = {}
+        for key, value in metadata.items():
+            if isinstance(value, (str, int, float, bool)):
+                sanitized[key] = value
+            elif isinstance(value, (list, tuple, set)):
+                sanitized[key] = json.dumps(value)  # Serialize lists to JSON strings
+            elif value is None:
+                sanitized[key] = ""  # Convert None to empty string
+            else:
+                sanitized[key] = str(value)  # Fallback string conversion
+                logger.warning(f"Converted metadata value for '{key}' to string")
+        return sanitized
+
     def add_documents(self, documents: List[Dict[str, Any]]):
-        """Add documents to the vector store."""
+        """Safe document addition with automatic metadata cleaning."""
         if not documents:
-            logger.warning("No documents to add to vector store.")
+            logger.warning("No documents to add")
             return
+
+        ids, embeddings, metadatas, contents = [], [], [], []
         
-        ids = [str(i) for i in range(len(documents))]
-        embeddings = [doc.metadata["embedding"] for doc in documents]
-        metadatas = [doc.metadata for doc in documents]
-        contents = [doc.page_content for doc in documents]
-        
-        self.collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            metadatas=metadatas,
-            documents=contents
-        )
-        logger.info(f"Added {len(documents)} documents to vector store")
-    
+        for i, doc in enumerate(documents):
+            ids.append(str(i))
+            embeddings.append(doc.metadata["embedding"])
+            metadatas.append(self._sanitize_metadata(doc.metadata))
+            contents.append(doc.page_content)
+
+        try:
+            self.collection.add(
+                ids=ids,
+                embeddings=embeddings,
+                metadatas=metadatas,
+                documents=contents
+            )
+            logger.info(f"Added {len(documents)} documents")
+        except Exception as e:
+            logger.critical(f"Failed to add documents: {str(e)}")
+            raise
+
     def query(self, query_text: str, top_k: Optional[int] = None) -> List[Tuple[str, float]]:
         """Query the vector store for similar documents."""
         top_k = top_k or settings.TOP_K
